@@ -13,11 +13,11 @@ struct Item {
 
 int main() {
     map<char, Item> items;
-    //Rock(X) wins to Scissors(C) and loses Paper(B)
+    //Rock(A) wins to Scissors(C) and loses Paper(B)
     items['A'] = {.wins_to = 'C', .loses_to = 'B'};
-    //Paper(Z) wins to Rock(A) and loses Scissors(C)
+    //Paper(B) wins to Rock(A) and loses Scissors(C)
     items['B'] = {.wins_to = 'A', .loses_to = 'C'};
-    //Scissors(Z) wins to Paper(B) and loses Rock(A)
+    //Scissors(C) wins to Paper(B) and loses Rock(A)
     items['C'] = {.wins_to = 'B', .loses_to = 'A'};
 
     //input file
