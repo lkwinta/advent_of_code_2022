@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <chrono>
 
 using namespace std;
 
@@ -18,8 +19,8 @@ bool operator < (const pos& lhs, const pos& rhs){
 bool operator ==(const pos& lhs, const pos& rhs){
     return lhs.row == rhs.row && lhs.col == rhs.col;
 }
-pos operator - (const pos& lhs, const pos& rhs){
-    return {lhs.row - rhs.row, lhs.col - rhs.col};
+pos operator + (const pos& lhs, const pos& rhs){
+    return {lhs.row + rhs.row, lhs.col + rhs.col};
 }
 
 char getValue(const vector<string>&b, const pos& p){
@@ -37,58 +38,29 @@ bool pos_good(const vector<string>&b, const pos& p){
 map<pos, int> visited;
 
 
-int shortest_path(vector<string>& map, pos current_pos, pos previous_pos, int steps = 0){
+void shortest_path(vector<string>& map, pos current_pos, pos previous_pos, int steps = 0, bool reverse = false){
+    if(!pos_good(map, current_pos))
+        return;
+    if(current_pos == previous_pos)
+        return;
+    if(!reverse && steps != 0 && getValue(map,current_pos) - getValue(map, previous_pos) >= 2 )
+        return;
+    if(reverse && steps != 0 && getValue(map,current_pos) - getValue(map, previous_pos) <= -2 )
+        return;
+    if(visited.find(current_pos) != visited.end() && visited[current_pos] <= steps)
+        return;
+
     visited[current_pos] = steps;
-    if(!pos_good(map, current_pos)){
-        return INT32_MAX;
-    }
-    if(visited.find(current_pos) != visited.end() && visited[current_pos] <= steps){
-        return visited[current_pos];
-    }
 
-    char currentHeight = getValue(map, current_pos);
-    if (currentHeight == 'E')
-        return steps;
-
-    int left_steps = INT32_MAX;
-    int right_steps = INT32_MAX;
-    int up_steps = INT32_MAX;
-    int down_steps = INT32_MAX;
-    //left
-    if(previous_pos != current_pos - pos{0, 1}){
-        pos left = current_pos - pos{0, 1};
-        if(pos_good(map, left) && abs(getValue(map, left) - currentHeight) < 2){
-            left_steps = shortest_path(map, left, current_pos, steps + 1);
-        }
-    }
-    //right
-    if(previous_pos != current_pos - pos{0, -1}){
-        pos right = current_pos - pos{0, -1};
-        if(pos_good(map, right) && abs(getValue(map, right) - currentHeight) < 2){
-            right_steps = shortest_path(map, right, current_pos, steps + 1);
-        }
-    }
-    //up
-    if(previous_pos != current_pos - pos{1, 0}){
-        pos up = current_pos - pos{1, 0};
-        if(pos_good(map, up) && abs(getValue(map, up) - currentHeight) < 2){
-            up_steps = shortest_path(map, up, current_pos, steps + 1);
-        }
-    }
-    //down
-    if(previous_pos != current_pos - pos{-1, 0}){
-        pos down = current_pos - pos{-1, 0};
-        if(pos_good(map, down) && abs(getValue(map, down) - currentHeight) < 2){
-            down_steps = shortest_path(map, down, current_pos, steps + 1);
-        }
-    }
-
-    return min(left_steps, min(right_steps, min(up_steps, down_steps)));
+    shortest_path(map, current_pos + pos{0, -1}, current_pos, steps + 1, reverse);
+    shortest_path(map, current_pos + pos{0, 1}, current_pos, steps + 1, reverse);
+    shortest_path(map, current_pos + pos{-1, 0}, current_pos, steps + 1, reverse);
+    shortest_path(map, current_pos + pos{1, 0}, current_pos, steps + 1, reverse);
 }
 
 int main() {
     //input file
-    ifstream data("test.txt");
+    ifstream data("data.txt");
 
     string s_line;
 
@@ -124,11 +96,26 @@ int main() {
         }
     }
 
-    cout << "start: " << start.row << " " << start.col << endl;
-    cout << "end: " << end.row << " " << end.col << endl;
-    int steps = shortest_path(map, start, start);
+    shortest_path(map, start, pos{-1, -1});
+    cout << visited[end] << endl;
 
-    cout << steps << endl;
+    int min_dist = visited[end];
+
+    visited.clear();
+    shortest_path(map, end, pos{-1, -1}, 0,true);
+
+    for(int i = 0; i < map.size(); i++){
+        for(int j = 0; j < map[0].length(); j++){
+            if(getValue(map, pos{i, j}) == 'a'){
+                int dist = visited[pos{i, j}];
+                if(dist != 0 && dist < min_dist)
+                    min_dist = dist;
+            }
+        }
+    }
+
+    cout << min_dist;
+
     data.close();
 
     return 0;
