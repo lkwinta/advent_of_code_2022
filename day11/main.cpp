@@ -4,18 +4,28 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <set>
 
 using namespace std;
 
-struct Monkey {
-    int number;
-    vector<int> items;
-    int (*op)(int, int);
-    int argument;
-    int test;
+//#define PART_1
+#define PART_2
 
-    int target_if_true;
-    int target_if_false;
+#ifdef PART_1
+#define N 20
+#elif defined PART_2
+#define N 10000
+#endif
+
+struct Monkey {
+    long long int number;
+    vector<long long int> items;
+    long long int (*op)(long long int, long long int);
+    long long int argument;
+    long long int test;
+
+    long long int target_if_true;
+    long long int target_if_false;
 };
 
 vector<string> split(const string& s, char delimiter) {
@@ -42,6 +52,8 @@ int main() {
     vector<Monkey> monkeys;
     Monkey monkey;
 
+    long long int modulo = 1;
+
     while(!data.eof()){
         if(data){
             getline(data, s_line);
@@ -66,9 +78,9 @@ int main() {
                     char operator_char = op[0];
                     string argument = op.substr(2, op.length() - 2);
                     if(operator_char == '+'){
-                        monkey.op = [](int a, int b){return a + b;};
+                        monkey.op = [](long long int a, long long int b){return a + b;};
                     } else {
-                        monkey.op = [](int a, int b) { return a * b; };
+                        monkey.op = [](long long int a, long long int b) { return a * b; };
                     }
                     if(argument != "old")
                         monkey.argument = stoi(argument);
@@ -78,6 +90,7 @@ int main() {
                     size_t pos = s_line.find("by");
                     string test = s_line.substr(pos + 2, s_line.length() - pos -2);
                     monkey.test = stoi(test);
+                    modulo *= monkey.test;
                 } else if(s_line.find("If true:") != string::npos){
                     size_t pos = s_line.find("monkey");
                     string target = s_line.substr(pos + 6, s_line.length() - pos - 6);
@@ -91,34 +104,51 @@ int main() {
         }
     }
     monkeys.push_back(monkey);
+
     for(const Monkey& m: monkeys){
         cout << "Monkey: " << m.number << endl;
         cout << "Items: ";
-        for(int item : m.items){
+        for(long long int item : m.items){
             cout << item << " ";
         }
+        cout << endl;
+        cout << "Op: ";
+        if(m.op(2,3) == 5)
+            cout << "+";
+        else
+            cout << "*";
         cout << endl;
         cout << "Argument: " << m.argument << endl;
         cout << "Test: " << m.test << endl;
         cout << "Target if true: " << m.target_if_true << endl;
         cout << "Target if false: " << m.target_if_false << endl;
+        cout << "-------------------";
         cout << endl;
-
     }
 
-    int* count = new int[monkeys.size()]();
+    auto* count = new long long int[monkeys.size()]();
 
-    for(int i = 0; i < 20; i++){
+    for(long long int i = 0; i < N; i++){
         for(Monkey& m: monkeys) {
             while(!m.items.empty()){
-                count[m.number]++;
-                int item = m.items.front();
+                long long int item = m.items.front();
                 m.items.erase(m.items.begin());
+                count[m.number]++;
                 if(m.argument != -1)
-                    item = m.op(item, m.argument);
+#ifdef PART_1
+                    item = m.op(item, m.argument) % modulo;
+#elif defined PART_2
+                    item = m.op(item, m.argument) % modulo;
+#endif
                 else
-                    item = m.op(item, item);
+#ifdef PART_1
+                    item = m.op(item, item) % modulo;
+#elif defined PART_2
+                    item = m.op(item, item) % modulo;
+#endif
+#ifdef PART_1
                 item /= 3;
+#endif
                 if(item % m.test == 0){
                     monkeys[m.target_if_true].items.push_back(item);
                 } else {
@@ -127,10 +157,13 @@ int main() {
             }
         }
     }
+
+
+
     sort(count, count + monkeys.size());
+
     cout << count[monkeys.size() - 1] * count[monkeys.size() - 2] << endl;
 
     data.close();
-    delete[] count;
     return 0;
 }
