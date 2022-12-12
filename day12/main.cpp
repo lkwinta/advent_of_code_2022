@@ -8,7 +8,7 @@ using namespace std;
 
 int main() {
     //input file
-    ifstream data("data.txt");
+    ifstream data("test.txt");
 
     string s_line;
 

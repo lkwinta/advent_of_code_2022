@@ -136,13 +136,13 @@ int main() {
                 count[m.number]++;
                 if(m.argument != -1)
 #ifdef PART_1
-                    item = m.op(item, m.argument) % modulo;
+                    item = m.op(item, m.argument);
 #elif defined PART_2
                     item = m.op(item, m.argument) % modulo;
 #endif
                 else
 #ifdef PART_1
-                    item = m.op(item, item) % modulo;
+                    item = m.op(item, item);
 #elif defined PART_2
                     item = m.op(item, item) % modulo;
 #endif
