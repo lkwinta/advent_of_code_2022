@@ -1,6 +1,11 @@
 # Project exclude paths
 /cmake-build-debug/
+/cmake-build-release/
 /.idea/.gitignore
 /.idea/advent_of_code.iml
 /.idea/misc.xml
 /.idea/modules.xml
+/.idea/.name
+/.idea/advent_of_code_2022.iml
+/.idea/serialmonitor_settings.xml
+/.idea/vcs.xml
