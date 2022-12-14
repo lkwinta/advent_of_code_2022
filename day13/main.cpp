@@ -13,6 +13,12 @@ struct Set {
     int next_length = 0;
     Set* next = nullptr;
     Set* previous = nullptr;
+
+    void resize(){
+        next_length++;
+        next = (Set*)realloc(next, next_length * sizeof(Set));
+        next[next_length - 1] = Set();
+    }
 };
 
 vector<string> split(const string& str, const string& delimiter){
@@ -34,16 +40,14 @@ vector<string> split(const string& str, const string& delimiter){
     return result;
 }
 
-void printSet(Set* head){
+void printSet(Set* head, int deep = 0){
     if(head == nullptr) return;
-    if (head->next == nullptr){
-        cout << head->data << " ";
-        return;
-    }
-    reverse(head->next, head->next + head->next_length);
-
-    for(int i = 0; i<head->next_length; i++){
-        printSet(&head->next[i]);
+    for (int i = 0; i < head->next_length ; i++) {
+        if(head->next[i].next == nullptr){
+            cout << head->next[i].data << "(" << deep << ")" << " ";
+        }
+        else
+            printSet(&head->next[i], deep + 1);
     }
 }
 
@@ -67,12 +71,13 @@ Set* convertString(const vector<string> &input){
 
     for(const string& c : input){
         if(c == "]"){
+            int temp_len = set_current->next_length - 1;
             while(s.top() != "["){
-                set_current->next_length++;
-                set_current->next = (Set*)realloc(set_current->next, set_current->next_length * sizeof(Set));
-                set_current->next[set_current->next_length - 1] = Set();
-                set_current->next[set_current->next_length - 1].data = stoi(s.top());
-                s.pop();
+                if(set_current->next[temp_len].next_length == 0) {
+                    set_current->next[temp_len].data = stoi(s.top());
+                    s.pop();
+                }
+                temp_len--;
             }
             s.pop();
             set_current = set_current->previous;
@@ -85,16 +90,16 @@ Set* convertString(const vector<string> &input){
                 set_current = set_head;
             }
             else{
-                set_current->next_length++;
-                set_current->next = (Set*)realloc(set_current->next, set_current->next_length * sizeof(Set));
-                set_current->next[set_current->next_length - 1] = Set();
+                set_current->resize();
                 set_current->next[set_current->next_length - 1].previous = set_current;
                 set_current = &set_current->next[set_current->next_length - 1];
             }
         }
         else {
-            if(c != ",")
+            if(c != ",") {
                 s.push(c);
+                set_current->resize();
+            }
         }
     }
 
@@ -102,26 +107,27 @@ Set* convertString(const vector<string> &input){
 }
 
 int main() {
-   // for(const string& s : split("[1,[2,[3,[4,[5,6,7]]]],8,9]", "[,]"))
-     //   cout << s << "|";
-    cout << endl;
-
     //input file
     ifstream data("test.txt");
 
     string s_line;
+    vector<pair<Set*, Set*>> pairs;
+    Set* h1 = nullptr;
+    Set* h2 = nullptr;
 
     while(!data.eof()){
         if(data){
             data >> s_line;
-            if(!s_line.empty()){
                 Set* h = convertString(split(s_line, "[,]"));
-                vector<int> res;
-                convertSetToVector(h, res);
-                for(int i : res)
-                    cout << i << " ";
-                cout << endl;
-            }
+                if(h1 == nullptr)
+                    h1 = h;
+                else if(h2 == nullptr)
+                    h2 = h;
+                else {
+                    pairs.emplace_back(h1, h2);
+                    h1 = h2 = nullptr;
+                }
+
         }
     }
 
