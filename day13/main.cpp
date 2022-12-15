@@ -9,7 +9,7 @@
 using namespace std;
 
 struct Set {
-    int data = 0;
+    int data = -1;
     int next_length = 0;
     Set* next = nullptr;
     Set* previous = nullptr;
@@ -19,6 +19,11 @@ struct Set {
         next = (Set*)realloc(next, next_length * sizeof(Set));
         next[next_length - 1] = Set();
     }
+};
+
+struct Item{
+    int data;
+    int deepLevel;
 };
 
 vector<string> split(const string& str, const string& delimiter){
@@ -44,22 +49,22 @@ void printSet(Set* head, int deep = 0){
     if(head == nullptr) return;
     for (int i = 0; i < head->next_length ; i++) {
         if(head->next[i].next == nullptr){
-            cout << head->next[i].data << "(" << deep << ")" << " ";
+            cout << head->next[i].data << " ";
         }
         else
             printSet(&head->next[i], deep + 1);
     }
 }
 
-void convertSetToVector(Set* head, vector<int>& result){
+void convertSetToVector(Set* head, vector<Item>& result, int deep = 0){
     if (head == nullptr) return;
 
     for (int i = 0; i  < head->next_length ; i++) {
         if(head->next[i].next == nullptr){
-            result.push_back(head->next[i].data);
+            result.push_back({head->next[i].data, deep});
         }
         else
-            convertSetToVector(&head->next[i], result);
+            convertSetToVector(&head->next[i], result, deep + 1);
     }
 }
 
@@ -106,30 +111,100 @@ Set* convertString(const vector<string> &input){
     return set_head;
 }
 
+//implement enum as result type
+enum VAL{
+    SMALLER,
+    EQUAL,
+    GREATER,
+};
+
+VAL leftSmallerThanRight(Set* left, Set* right){
+    if(left->next == nullptr && right->next == nullptr){
+        if(left->data != -1 && right->data != -1)
+            if(left->data > right->data)
+                return GREATER;
+            else if (left->data == right->data)
+                return EQUAL;
+            else
+                return SMALLER;
+        else
+            if(left->data != -1 && right->data == -1)
+                return GREATER;
+            else
+                return SMALLER;
+    }
+    else if(left->next != nullptr && right->next == nullptr){
+        VAL result;
+        for(int i = 0; i < left->next_length; i++){
+            if(left->next[i].data == -1 && right->data==-1)
+                return GREATER;
+            result = leftSmallerThanRight(&left->next[i], right);
+            if(result != EQUAL)
+                return result;
+        }
+        return result;
+    }
+    else if(left->next == nullptr && right->next != nullptr){
+        VAL result;
+        for(int i = 0; i < right->next_length; i++){
+            result = leftSmallerThanRight(left, &right->next[i]);
+            if(result != EQUAL)
+                return result;
+        }
+        return result;
+    }
+    else {
+        VAL result;
+        for(int i = 0; i < left->next_length && i < right->next_length; i++){
+            result = leftSmallerThanRight(&left->next[i], &right->next[i]);
+            if(result != EQUAL)
+                return result;
+        }
+
+        if(result == EQUAL){
+            if(left->next_length < right->next_length){
+                return SMALLER;
+            } else if ( left->next_length > right->next_length) {
+                return GREATER;
+            } else {
+                return EQUAL;
+            }
+        }
+
+        return result;
+    }
+}
+
 int main() {
     //input file
-    ifstream data("test.txt");
+    ifstream data("t.txt");
 
     string s_line;
-    vector<pair<Set*, Set*>> pairs;
-    Set* h1 = nullptr;
-    Set* h2 = nullptr;
+    vector<Set*> sets;
 
     while(!data.eof()){
         if(data){
             data >> s_line;
+            if (!s_line.empty())
+            {
                 Set* h = convertString(split(s_line, "[,]"));
-                if(h1 == nullptr)
-                    h1 = h;
-                else if(h2 == nullptr)
-                    h2 = h;
-                else {
-                    pairs.emplace_back(h1, h2);
-                    h1 = h2 = nullptr;
-                }
-
+                printSet(h);
+                cout << endl;
+                sets.push_back(h);
+            }
         }
     }
+
+    int index = 1;
+    int sum = 0;
+    for(int i = 1; i <  sets.size(); i+=2){
+        VAL res = leftSmallerThanRight(sets[i-1], sets[i]);
+        cout << "i: "  << index << " | res: " << (res==SMALLER )<< endl;
+        sum += (res==SMALLER)*index;
+        index++;
+    }
+
+    cout << "sum: " << sum << endl;
 
     data.close();
 

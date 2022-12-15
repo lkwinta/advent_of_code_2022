@@ -7,5 +7,6 @@ add_executable(day13 main.cpp)
 
 configure_file(test.txt test.txt COPYONLY)
 configure_file(data.txt data.txt COPYONLY)
+configure_file(t.txt t.txt COPYONLY)
 
 install(TARGETS day13 RUNTIME DESTINATION bin)
