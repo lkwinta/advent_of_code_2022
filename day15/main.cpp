@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <execution>
 
 using namespace std;
 
@@ -129,6 +130,39 @@ int main() {
     ranges.clear();
     Position beacon_found{};
 
+    vector<int> line_numbers;
+    for(int i = 0; i <= max_line; i++){
+        line_numbers.push_back(i);
+    }
+
+    for_each(execution::par_unseq, line_numbers.begin(), line_numbers.end(), [&beacon_found, records](int i) mutable{
+        vector<Range> ranges;
+        for(auto record : records){
+            int distance = manhattan_distance(record.sensor, record.beacon);
+            int required_distance = abs(i - record.sensor.y);
+
+            if(record.sensor.y == i)
+                ranges.push_back({record.sensor.x, record.sensor.x});
+
+            if(required_distance <= distance){
+                int radius = distance - required_distance;
+                ranges.push_back({record.sensor.x - radius, record.sensor.x + radius});
+            }
+        }
+        ranges = reduce_range(ranges);
+
+        if(ranges.size() > 1) {
+            for(int k = 1; k < ranges.size(); k++){
+                if(ranges[k].start - ranges[k-1].end == 2){
+                    int x_pos = (ranges[1].start + ranges[0].end)/2;
+                    if(x_pos >= 0 and x_pos <= 4000000) {
+                        beacon_found = {x_pos, i};
+                    }
+                }
+            }
+        }
+    });
+/*
     for(int i = 0; i <= max_line; i++){
         for(auto record : records){
             int distance = manhattan_distance(record.sensor, record.beacon);
@@ -157,7 +191,7 @@ int main() {
             }
         }
         ranges.clear();
-    }
+    }*/
 
     unsigned long long int signal_strength = ((unsigned long long int)beacon_found.x) * 4000000 + beacon_found.y;
 
